@@ -121,4 +121,4 @@ apply (IndexAction i r) v = (v `difference` r) `mappend` i
 
 -- | Check whether result fields matches query
 matchPrecise :: [String] -> String -> Bool
-matchPrecise fields query = null $ deleteFirstsBy isInfixOf fields (words query)
+matchPrecise fields query = null $ deleteFirstsBy (flip isInfixOf) (words query) fields
