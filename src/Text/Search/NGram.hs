@@ -9,6 +9,8 @@ module Text.Search.NGram (
     value,
 
     IndexAction,
+    insertAction,
+    removeAction,
     insert,
     remove,
     update,
@@ -90,6 +92,14 @@ value h k v = mconcat $ map value' (h k) where
 -- | Action on index
 data IndexAction a = IndexAction (Index a) (Index a)
     deriving (Eq, Ord, Read, Show)
+
+-- | Insert index
+insertAction :: Ord a => Index a -> IndexAction a
+insertAction ix = IndexAction ix mempty
+
+-- | Remove index
+removeAction :: Ord a => Index a -> IndexAction a
+removeAction ix = IndexAction mempty ix
 
 -- | Normalize removes duplicate 'insert' and 'remove'
 normalizeAction :: Ord a => IndexAction a -> IndexAction a
