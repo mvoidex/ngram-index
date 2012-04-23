@@ -12,7 +12,9 @@ module Text.Search.NGram (
     insert,
     remove,
     update,
-    apply
+    apply,
+
+    matchPrecise
     ) where
 
 import qualified Data.IntMap as IM
@@ -22,6 +24,8 @@ import Data.Monoid
 import Data.Ord (comparing)
 import Data.List hiding (insert)
 import Data.Maybe (mapMaybe)
+
+import qualified Data.Hash as H
 
 -- | Back indexing
 data Index a = Index {
@@ -72,7 +76,7 @@ ngram i =
 -- | Hash index method
 -- TODO: Use Data.Hash
 hash :: String -> IndexValue
-hash = reference . sum . map fromEnum
+hash = reference . fromIntegral . H.asWord64 . H.hash
 
 -- | Simple back reference for index
 reference :: Int -> IndexValue
@@ -114,3 +118,7 @@ update h kr ki v = IndexAction (value h ki v) (value h kr v)
 -- | Apply action
 apply :: Ord a => IndexAction a -> Index a -> Index a
 apply (IndexAction i r) v = (v `difference` r) `mappend` i
+
+-- | Check whether result matches query
+matchPrecise :: String -> String -> Bool
+matchPrecise result query = all (`isInfixOf` result) (words query)
