@@ -119,6 +119,6 @@ update h kr ki v = IndexAction (value h ki v) (value h kr v)
 apply :: Ord a => IndexAction a -> Index a -> Index a
 apply (IndexAction i r) v = (v `difference` r) `mappend` i
 
--- | Check whether result matches query
-matchPrecise :: String -> String -> Bool
-matchPrecise result query = all (`isInfixOf` result) (words query)
+-- | Check whether result fields matches query
+matchPrecise :: [String] -> String -> Bool
+matchPrecise fields query = null $ deleteFirstsBy isInfixOf fields (words query)
