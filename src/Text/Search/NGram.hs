@@ -90,6 +90,10 @@ value h k v = mconcat $ map value' (h k) where
     value' k' = Index $ IM.singleton k' (S.singleton v)
 
 -- | Action on index
+-- Represented as difference and append
+-- f x = x + a - b
+-- assumed, that a `intersecion` b == mempty,
+-- in this case x + a - b = x - b + a
 data IndexAction a = IndexAction (Index a) (Index a)
     deriving (Eq, Ord, Read, Show)
 
@@ -101,17 +105,12 @@ insertAction ix = IndexAction ix mempty
 removeAction :: Ord a => Index a -> IndexAction a
 removeAction ix = IndexAction mempty ix
 
--- | Normalize removes duplicate 'insert' and 'remove'
-normalizeAction :: Ord a => IndexAction a -> IndexAction a
-normalizeAction (IndexAction i r) = IndexAction i' r' where
-    i' = i `difference` c
-    r' = r `difference` c
-    c = intersection i r
-
+-- | (f `mappend` g) `apply` x = f `apply` (g `apply` x)
 instance Ord a => Monoid (IndexAction a) where
     mempty = IndexAction mempty mempty
-    mappend (IndexAction il rl) (IndexAction ir rr) =
-        normalizeAction $ IndexAction (il `mappend` ir) (rl `mappend` rr)
+    mappend (IndexAction il rl) (IndexAction ir rr) = IndexAction
+        ((ir `difference` rl) `mappend` il)
+        ((rr `difference` il) `mappend` rl)
 
 -- | Insert action
 insert :: Ord a => (b -> IndexValue) -> b -> a -> IndexAction a
@@ -123,7 +122,9 @@ remove h k v = IndexAction mempty (value h k v)
 
 -- | Update action
 update :: Ord a => (b -> IndexValue) -> b -> b -> a -> IndexAction a
-update h kr ki v = IndexAction (value h ki v) (value h kr v)
+update h kr ki v = IndexAction ia (ra `difference` ia) where
+    ia = value h ki v
+    ra = value h kr v
 
 -- | Apply action
 apply :: Ord a => IndexAction a -> Index a -> Index a
